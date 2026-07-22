@@ -198,8 +198,10 @@ export function AdminDashboardModal() {
   const handleCreateProject = async () => {
     if (!newProjectForm.title || !newProjectForm.shortDescription) return;
 
+    const isEditing = !!newProjectForm.id && projects.some(p => p.id === newProjectForm.id);
+
     const created: Project = {
-      id: newProjectForm.title.toLowerCase().replace(/\s+/g, "-"),
+      id: newProjectForm.id || newProjectForm.title.toLowerCase().replace(/\s+/g, "-"),
       title: newProjectForm.title,
       shortDescription: newProjectForm.shortDescription,
       detailedDescription: newProjectForm.detailedDescription || newProjectForm.shortDescription,
@@ -208,47 +210,65 @@ export function AdminDashboardModal() {
       projectImage: newProjectForm.projectImage || "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80",
       liveUrl: newProjectForm.liveUrl,
       githubUrl: newProjectForm.githubUrl,
-      status: "Completed",
-      featured: true,
-      date: "2024",
+      status: newProjectForm.status || "Completed",
+      featured: newProjectForm.featured !== undefined ? newProjectForm.featured : true,
+      date: newProjectForm.date || "2024",
       tags: newProjectForm.tags || ["Project"]
     };
 
-    addProject(created);
-    const updatedProjects = [created, ...projects];
-    const ok = await saveToDisk("projects", updatedProjects);
+    let ok = false;
+    if (isEditing) {
+      updateProject(created.id, created);
+      const updatedProjects = projects.map(p => p.id === created.id ? created : p);
+      ok = await saveToDisk("projects", updatedProjects);
+      setSaveStatus(ok ? "Project updated & saved to disk!" : "Project updated!");
+    } else {
+      addProject(created);
+      const updatedProjects = [created, ...projects];
+      ok = await saveToDisk("projects", updatedProjects);
+      setSaveStatus(ok ? "Project added & saved to disk!" : "Project added!");
+    }
 
     setShowAddProjectForm(false);
     setNewProjectForm({ title: "", shortDescription: "", detailedDescription: "" });
-    setSaveStatus(ok ? "Project added & saved to disk!" : "Project added!");
     setTimeout(() => setSaveStatus(""), 3000);
   };
 
   const handleCreateBlog = async () => {
     if (!newBlogForm.title || !newBlogForm.excerpt || !newBlogForm.content) return;
 
+    const isEditing = !!newBlogForm.id && blogs.some(b => b.id === newBlogForm.id);
+
     const created: BlogPost = {
-      id: newBlogForm.title.toLowerCase().replace(/\s+/g, "-"),
+      id: newBlogForm.id || newBlogForm.title.toLowerCase().replace(/\s+/g, "-"),
       title: newBlogForm.title,
-      slug: newBlogForm.title.toLowerCase().replace(/\s+/g, "-"),
+      slug: newBlogForm.slug || newBlogForm.title.toLowerCase().replace(/\s+/g, "-"),
       excerpt: newBlogForm.excerpt,
       content: newBlogForm.content,
-      date: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+      date: newBlogForm.date || new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
       readTime: newBlogForm.readTime || "4 min read",
       category: (newBlogForm.category as any) || "Career & Stories",
       tags: newBlogForm.tags || ["Article"],
       coverImage: newBlogForm.coverImage || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80",
-      featured: true,
-      author: siteConfig.name
+      featured: newBlogForm.featured !== undefined ? newBlogForm.featured : true,
+      author: newBlogForm.author || siteConfig.name
     };
 
-    addBlog(created);
-    const updatedBlogs = [created, ...blogs];
-    const ok = await saveToDisk("blogs", updatedBlogs);
+    let ok = false;
+    if (isEditing) {
+      updateBlog(created.id, created);
+      const updatedBlogs = blogs.map(b => b.id === created.id ? created : b);
+      ok = await saveToDisk("blogs", updatedBlogs);
+      setSaveStatus(ok ? "Article updated & saved to disk!" : "Article updated!");
+    } else {
+      addBlog(created);
+      const updatedBlogs = [created, ...blogs];
+      ok = await saveToDisk("blogs", updatedBlogs);
+      setSaveStatus(ok ? "Article published & saved to disk!" : "Article published!");
+    }
 
     setShowAddBlogForm(false);
     setNewBlogForm({ title: "", excerpt: "", content: "" });
-    setSaveStatus(ok ? "Article published & saved to disk!" : "Article published!");
     setTimeout(() => setSaveStatus(""), 3000);
   };
 
@@ -580,7 +600,12 @@ export function AdminDashboardModal() {
                         Projects Catalog
                       </h3>
                       <button
-                        onClick={() => setShowAddProjectForm(!showAddProjectForm)}
+                        onClick={() => {
+                          if (!showAddProjectForm) {
+                            setNewProjectForm({ title: "", shortDescription: "", detailedDescription: "" });
+                          }
+                          setShowAddProjectForm(!showAddProjectForm);
+                        }}
                         className="inline-flex items-center space-x-1 rounded-lg bg-cyan-500 px-3 py-1.5 font-mono text-xs font-bold text-slate-950 hover:bg-cyan-400"
                       >
                         <Plus className="h-3.5 w-3.5" />
@@ -676,12 +701,25 @@ export function AdminDashboardModal() {
                               <span className="font-mono text-[10px] text-cyan-600 dark:text-cyan-400 block">{proj.category}</span>
                             </div>
                           </div>
-                          <button
-                            onClick={() => deleteProject(proj.id)}
-                            className="p-1.5 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => {
+                                setNewProjectForm(proj);
+                                setShowAddProjectForm(true);
+                              }}
+                              className="p-1.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/20"
+                              title="Edit Project"
+                            >
+                              <Edit3 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => deleteProject(proj.id)}
+                              className="p-1.5 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                              title="Delete Project"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -696,7 +734,12 @@ export function AdminDashboardModal() {
                         Blogs & Story Posts
                       </h3>
                       <button
-                        onClick={() => setShowAddBlogForm(!showAddBlogForm)}
+                        onClick={() => {
+                          if (!showAddBlogForm) {
+                            setNewBlogForm({ title: "", excerpt: "", content: "" });
+                          }
+                          setShowAddBlogForm(!showAddBlogForm);
+                        }}
                         className="inline-flex items-center space-x-1 rounded-lg bg-cyan-500 px-3 py-1.5 font-mono text-xs font-bold text-slate-950 hover:bg-cyan-400"
                       >
                         <Plus className="h-3.5 w-3.5" />
@@ -800,12 +843,25 @@ export function AdminDashboardModal() {
                               <span className="font-mono text-[10px] text-cyan-600 dark:text-cyan-400">{b.category} • {b.date}</span>
                             </div>
                           </div>
-                          <button
-                            onClick={() => deleteBlog(b.id)}
-                            className="p-1.5 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => {
+                                setNewBlogForm(b);
+                                setShowAddBlogForm(true);
+                              }}
+                              className="p-1.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/20"
+                              title="Edit Article"
+                            >
+                              <Edit3 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => deleteBlog(b.id)}
+                              className="p-1.5 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                              title="Delete Article"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>

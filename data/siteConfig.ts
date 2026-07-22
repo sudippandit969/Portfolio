@@ -65,9 +65,9 @@ export const siteConfig: SiteConfig = {
   profileImage: "/profile.jpg",
   adminPin: "721426",
   stats: [
-    { label: "Projects Completed", value: "15+", description: "Production & Academic builds" },
+    { label: "Projects Completed", value: "7+", description: "Production & Academic builds" },
     { label: "Research Papers", value: "1", description: "Peer-reviewed publication" },
-    { label: "Certifications", value: "8+", description: "Cloud, ML & Web Stack" },
+    { label: "Certifications", value: "5+", description: "Cloud, ML & Web Stack" },
     { label: "Technologies", value: "25+", description: "Languages, DBs & Tools" }
   ],
   seo: {

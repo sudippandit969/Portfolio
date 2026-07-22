@@ -62,7 +62,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Load cached state first, then hydrate from API-backed storage.
+  // Load state purely from API-backed Postgres storage.
   useEffect(() => {
     const loadPortfolioData = async () => {
       try {
@@ -73,86 +73,26 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         const state = data?.state;
         if (!state) return;
 
-        if (state.siteConfig) {
-          setSiteConfig(state.siteConfig as SiteConfig);
-          localStorage.setItem("sp_siteConfig", JSON.stringify(state.siteConfig));
-        }
-        if (state.projects) {
-          setProjects(state.projects as Project[]);
-          localStorage.setItem("sp_projects", JSON.stringify(state.projects));
-        }
-        if (state.skills) {
-          setSkills(state.skills as SkillCategory[]);
-          localStorage.setItem("sp_skills", JSON.stringify(state.skills));
-        }
-        if (state.certificates) {
-          setCertificates(state.certificates as Certificate[]);
-          localStorage.setItem("sp_certificates", JSON.stringify(state.certificates));
-        }
-        if (state.research) {
-          setResearch(state.research as ResearchPaper[]);
-          localStorage.setItem("sp_research", JSON.stringify(state.research));
-        }
-        if (state.experience) {
-          setExperience(state.experience as Experience[]);
-          localStorage.setItem("sp_experience", JSON.stringify(state.experience));
-        }
-        if (state.education) {
-          setEducation(state.education as Education[]);
-          localStorage.setItem("sp_education", JSON.stringify(state.education));
-        }
-        if (state.achievements) {
-          setAchievements(state.achievements as Achievement[]);
-          localStorage.setItem("sp_achievements", JSON.stringify(state.achievements));
-        }
-        if (state.socialLinks) {
-          setSocialLinks(state.socialLinks as SocialLink[]);
-          localStorage.setItem("sp_socialLinks", JSON.stringify(state.socialLinks));
-        }
-        if (state.blogs) {
-          setBlogs(state.blogs as BlogPost[]);
-          localStorage.setItem("sp_blogs", JSON.stringify(state.blogs));
-        }
+        if (state.siteConfig) setSiteConfig(state.siteConfig as SiteConfig);
+        if (state.projects) setProjects(state.projects as Project[]);
+        if (state.skills) setSkills(state.skills as SkillCategory[]);
+        if (state.certificates) setCertificates(state.certificates as Certificate[]);
+        if (state.research) setResearch(state.research as ResearchPaper[]);
+        if (state.experience) setExperience(state.experience as Experience[]);
+        if (state.education) setEducation(state.education as Education[]);
+        if (state.achievements) setAchievements(state.achievements as Achievement[]);
+        if (state.socialLinks) setSocialLinks(state.socialLinks as SocialLink[]);
+        if (state.blogs) setBlogs(state.blogs as BlogPost[]);
       } catch (error) {
         console.error("Failed to load portfolio data from API", error);
       }
     };
 
     try {
-      const savedConfig = localStorage.getItem("sp_siteConfig");
-      if (savedConfig) setSiteConfig(JSON.parse(savedConfig));
-
-      const savedProjects = localStorage.getItem("sp_projects");
-      if (savedProjects) setProjects(JSON.parse(savedProjects));
-
-      const savedSkills = localStorage.getItem("sp_skills");
-      if (savedSkills) setSkills(JSON.parse(savedSkills));
-
-      const savedCerts = localStorage.getItem("sp_certificates");
-      if (savedCerts) setCertificates(JSON.parse(savedCerts));
-
-      const savedResearch = localStorage.getItem("sp_research");
-      if (savedResearch) setResearch(JSON.parse(savedResearch));
-
-      const savedExperience = localStorage.getItem("sp_experience");
-      if (savedExperience) setExperience(JSON.parse(savedExperience));
-
-      const savedEducation = localStorage.getItem("sp_education");
-      if (savedEducation) setEducation(JSON.parse(savedEducation));
-
-      const savedAchievements = localStorage.getItem("sp_achievements");
-      if (savedAchievements) setAchievements(JSON.parse(savedAchievements));
-
-      const savedSocialLinks = localStorage.getItem("sp_socialLinks");
-      if (savedSocialLinks) setSocialLinks(JSON.parse(savedSocialLinks));
-
-      const savedBlogs = localStorage.getItem("sp_blogs");
-      if (savedBlogs) setBlogs(JSON.parse(savedBlogs));
-
       const savedAuth = localStorage.getItem("sp_admin_auth");
       if (savedAuth === "true") setIsAuthenticated(true);
     } catch (e) {
-      console.error("Failed to load saved state from localStorage", e);
+      console.error("Failed to load saved auth from localStorage", e);
     }
 
     void loadPortfolioData();
@@ -175,43 +115,36 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
   const updateSiteConfig = (newConfig: SiteConfig) => {
     setSiteConfig(newConfig);
-    localStorage.setItem("sp_siteConfig", JSON.stringify(newConfig));
   };
 
   const addProject = (project: Project) => {
     const next = [project, ...projects];
     setProjects(next);
-    localStorage.setItem("sp_projects", JSON.stringify(next));
   };
 
   const updateProject = (id: string, updated: Partial<Project>) => {
     const next = projects.map((p) => (p.id === id ? { ...p, ...updated } : p));
     setProjects(next);
-    localStorage.setItem("sp_projects", JSON.stringify(next));
   };
 
   const deleteProject = (id: string) => {
     const next = projects.filter((p) => p.id !== id);
     setProjects(next);
-    localStorage.setItem("sp_projects", JSON.stringify(next));
   };
 
   const addBlog = (blog: BlogPost) => {
     const next = [blog, ...blogs];
     setBlogs(next);
-    localStorage.setItem("sp_blogs", JSON.stringify(next));
   };
 
   const updateBlog = (id: string, updated: Partial<BlogPost>) => {
     const next = blogs.map((b) => (b.id === id ? { ...b, ...updated } : b));
     setBlogs(next);
-    localStorage.setItem("sp_blogs", JSON.stringify(next));
   };
 
   const deleteBlog = (id: string) => {
     const next = blogs.filter((b) => b.id !== id);
     setBlogs(next);
-    localStorage.setItem("sp_blogs", JSON.stringify(next));
   };
 
   const addSkill = (categoryId: string, skill: { name: string; level?: "Expert" | "Advanced" | "Proficient"; highlight?: boolean }) => {
@@ -225,7 +158,6 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       return cat;
     });
     setSkills(next);
-    localStorage.setItem("sp_skills", JSON.stringify(next));
   };
 
   const deleteSkill = (categoryId: string, skillName: string) => {
@@ -239,7 +171,6 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       return cat;
     });
     setSkills(next);
-    localStorage.setItem("sp_skills", JSON.stringify(next));
   };
 
   const toggleSkillHighlight = (categoryId: string, skillName: string) => {
@@ -253,28 +184,23 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       return cat;
     });
     setSkills(next);
-    localStorage.setItem("sp_skills", JSON.stringify(next));
   };
 
   const updateCertificates = (certs: Certificate[]) => {
     setCertificates(certs);
-    localStorage.setItem("sp_certificates", JSON.stringify(certs));
   };
 
   const updateResearch = (paper: ResearchPaper) => {
     const next = [paper];
     setResearch(next);
-    localStorage.setItem("sp_research", JSON.stringify(next));
   };
 
   const updateExperience = (exps: Experience[]) => {
     setExperience(exps);
-    localStorage.setItem("sp_experience", JSON.stringify(exps));
   };
 
   const updateEducation = (edus: Education[]) => {
     setEducation(edus);
-    localStorage.setItem("sp_education", JSON.stringify(edus));
   };
 
   const saveToDisk = async (target: string, payload: any): Promise<boolean> => {
@@ -295,7 +221,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   };
 
   const resetToDefault = () => {
-    localStorage.clear();
+    localStorage.removeItem("sp_admin_auth");
     setSiteConfig(defaultSiteConfig);
     setProjects(defaultProjectsData);
     setSkills(defaultSkillsData);
