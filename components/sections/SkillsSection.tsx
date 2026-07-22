@@ -178,11 +178,6 @@ export function SkillsSection() {
                               <Sparkles className="h-3 w-3 text-cyan-600 dark:text-cyan-400 shrink-0" />
                             )}
                             <span className="font-medium">{skill.name}</span>
-                            {skill.level && (
-                              <span className="text-[9px] font-mono text-slate-500 dark:text-slate-500 group-hover:text-cyan-600 dark:group-hover:text-cyan-400">
-                                ({skill.level[0]})
-                              </span>
-                            )}
                           </div>
                         ))}
                       </div>
