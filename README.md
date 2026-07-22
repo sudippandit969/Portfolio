@@ -9,13 +9,15 @@ A modern personal portfolio built with Next.js (App Router), React, TypeScript, 
 - TypeScript
 - Tailwind CSS 4
 - Framer Motion
+- Prisma ORM
+- PostgreSQL (Render-compatible)
 
 ## Features
 
 - Responsive portfolio website with animated UI sections
 - Admin dashboard modal for updating portfolio content
 - Image upload endpoint for admin content updates
-- Local save API for writing updates into files during development
+- PostgreSQL-backed portfolio state for persistent content updates
 
 ## Project Structure
 
@@ -60,17 +62,41 @@ npm run start
 Create a `.env.local` file in the project root:
 
 ```bash
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DBNAME?sslmode=require
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_UPLOAD_PRESET=your_unsigned_upload_preset
+ADMIN_PIN=your_secure_admin_pin
 ```
 
 How to get these values:
 
-1. Create a free Cloudinary account.
-2. Copy your cloud name from the Cloudinary dashboard.
-3. Create an **unsigned upload preset** in Cloudinary Settings > Upload.
-4. Add both values to `.env.local` for local development.
-5. Add the same variables in Vercel Project Settings > Environment Variables.
+1. Create a PostgreSQL database (Render PostgreSQL is supported).
+2. Copy the external PostgreSQL URL and set it as `DATABASE_URL`.
+3. Create a free Cloudinary account.
+4. Copy your cloud name from the Cloudinary dashboard.
+5. Create an **unsigned upload preset** in Cloudinary Settings > Upload.
+6. Add all values to `.env.local` for local development.
+7. Add the same variables in Vercel Project Settings > Environment Variables.
+
+## Database Setup (Prisma)
+
+Generate Prisma client:
+
+```bash
+npm run prisma:generate
+```
+
+Create/apply local migrations:
+
+```bash
+npm run prisma:migrate -- --name init_portfolio_content
+```
+
+For production deployments, apply existing migrations:
+
+```bash
+npm run prisma:deploy
+```
 
 ## Deployment
 
@@ -87,9 +113,18 @@ How to get these values:
 
 #### Notes for this project on Vercel
 
-- `app/api/admin/save/route.ts` already checks `process.env.VERCEL` and avoids disk writes in production.
+- `app/api/admin/save/route.ts` saves portfolio content to PostgreSQL via Prisma.
 - `app/api/admin/upload/route.ts` uploads to Cloudinary if `CLOUDINARY_CLOUD_NAME` and `CLOUDINARY_UPLOAD_PRESET` are set.
 - If Cloudinary is not configured on Vercel, the upload API returns an explicit error so missing setup is obvious.
+
+### Render PostgreSQL + Vercel Deployment Flow
+
+1. Create PostgreSQL database in Render.
+2. Copy Render external database URL.
+3. In Vercel, set `DATABASE_URL` to the Render URL (keep `sslmode=require`).
+4. In Vercel, set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_UPLOAD_PRESET`, and `ADMIN_PIN`.
+5. Redeploy in Vercel.
+6. Ensure migrations are applied using `npm run prisma:deploy` during deployment pipeline.
 
 ### Option B: Deploy on your own Node server
 
@@ -116,10 +151,9 @@ npm run start
 
 ## Important Production Security Improvements (Recommended)
 
-1. Move admin PIN to environment variables (server-only), not client-exposed config.
-2. Replace plain PIN check with hashed secret verification.
-3. Add rate limiting to admin authentication endpoint.
-4. Use persistent object storage for uploaded images.
+1. Replace plain PIN check with hashed secret verification.
+2. Add rate limiting to admin authentication endpoint.
+3. Optionally move admin login to server-issued session tokens.
 
 ## Useful Scripts
 

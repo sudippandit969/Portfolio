@@ -33,7 +33,8 @@ async function uploadToCloudinary(file: File): Promise<string> {
 export async function POST(req: NextRequest) {
   try {
     const adminPinHeader = req.headers.get("x-admin-pin");
-    if (adminPinHeader !== siteConfig.adminPin) {
+    const adminPin = process.env.ADMIN_PIN || siteConfig.adminPin;
+    if (adminPinHeader !== adminPin) {
       return NextResponse.json({ error: "Unauthorized: Invalid Admin PIN" }, { status: 401 });
     }
 

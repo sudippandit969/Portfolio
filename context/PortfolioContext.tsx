@@ -62,8 +62,62 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Load saved state from localStorage on initial mount
+  // Load cached state first, then hydrate from API-backed storage.
   useEffect(() => {
+    const loadPortfolioData = async () => {
+      try {
+        const res = await fetch("/api/portfolio", { cache: "no-store" });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const state = data?.state;
+        if (!state) return;
+
+        if (state.siteConfig) {
+          setSiteConfig(state.siteConfig as SiteConfig);
+          localStorage.setItem("sp_siteConfig", JSON.stringify(state.siteConfig));
+        }
+        if (state.projects) {
+          setProjects(state.projects as Project[]);
+          localStorage.setItem("sp_projects", JSON.stringify(state.projects));
+        }
+        if (state.skills) {
+          setSkills(state.skills as SkillCategory[]);
+          localStorage.setItem("sp_skills", JSON.stringify(state.skills));
+        }
+        if (state.certificates) {
+          setCertificates(state.certificates as Certificate[]);
+          localStorage.setItem("sp_certificates", JSON.stringify(state.certificates));
+        }
+        if (state.research) {
+          setResearch(state.research as ResearchPaper[]);
+          localStorage.setItem("sp_research", JSON.stringify(state.research));
+        }
+        if (state.experience) {
+          setExperience(state.experience as Experience[]);
+          localStorage.setItem("sp_experience", JSON.stringify(state.experience));
+        }
+        if (state.education) {
+          setEducation(state.education as Education[]);
+          localStorage.setItem("sp_education", JSON.stringify(state.education));
+        }
+        if (state.achievements) {
+          setAchievements(state.achievements as Achievement[]);
+          localStorage.setItem("sp_achievements", JSON.stringify(state.achievements));
+        }
+        if (state.socialLinks) {
+          setSocialLinks(state.socialLinks as SocialLink[]);
+          localStorage.setItem("sp_socialLinks", JSON.stringify(state.socialLinks));
+        }
+        if (state.blogs) {
+          setBlogs(state.blogs as BlogPost[]);
+          localStorage.setItem("sp_blogs", JSON.stringify(state.blogs));
+        }
+      } catch (error) {
+        console.error("Failed to load portfolio data from API", error);
+      }
+    };
+
     try {
       const savedConfig = localStorage.getItem("sp_siteConfig");
       if (savedConfig) setSiteConfig(JSON.parse(savedConfig));
@@ -77,6 +131,21 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       const savedCerts = localStorage.getItem("sp_certificates");
       if (savedCerts) setCertificates(JSON.parse(savedCerts));
 
+      const savedResearch = localStorage.getItem("sp_research");
+      if (savedResearch) setResearch(JSON.parse(savedResearch));
+
+      const savedExperience = localStorage.getItem("sp_experience");
+      if (savedExperience) setExperience(JSON.parse(savedExperience));
+
+      const savedEducation = localStorage.getItem("sp_education");
+      if (savedEducation) setEducation(JSON.parse(savedEducation));
+
+      const savedAchievements = localStorage.getItem("sp_achievements");
+      if (savedAchievements) setAchievements(JSON.parse(savedAchievements));
+
+      const savedSocialLinks = localStorage.getItem("sp_socialLinks");
+      if (savedSocialLinks) setSocialLinks(JSON.parse(savedSocialLinks));
+
       const savedBlogs = localStorage.getItem("sp_blogs");
       if (savedBlogs) setBlogs(JSON.parse(savedBlogs));
 
@@ -85,6 +154,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error("Failed to load saved state from localStorage", e);
     }
+
+    void loadPortfolioData();
   }, []);
 
   const authenticateAdmin = (pin: string): boolean => {
