@@ -53,6 +53,24 @@ npm run start
 - Admin PIN is currently defined in `data/siteConfig.ts` as `adminPin`.
 - For security, do not expose real PIN values in UI text/placeholder hints.
 - In production (for example on Vercel), file writes are not persistent because the server file system is read-only/ephemeral.
+- Image uploads are persistent in production when Cloudinary environment variables are configured.
+
+## Environment Variables
+
+Create a `.env.local` file in the project root:
+
+```bash
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_UPLOAD_PRESET=your_unsigned_upload_preset
+```
+
+How to get these values:
+
+1. Create a free Cloudinary account.
+2. Copy your cloud name from the Cloudinary dashboard.
+3. Create an **unsigned upload preset** in Cloudinary Settings > Upload.
+4. Add both values to `.env.local` for local development.
+5. Add the same variables in Vercel Project Settings > Environment Variables.
 
 ## Deployment
 
@@ -70,11 +88,8 @@ npm run start
 #### Notes for this project on Vercel
 
 - `app/api/admin/save/route.ts` already checks `process.env.VERCEL` and avoids disk writes in production.
-- `app/api/admin/upload/route.ts` currently writes to `public/uploads` and will not persist on Vercel between deployments/restarts.
-- For persistent uploads in production, use a storage service such as:
-  - Vercel Blob
-  - Cloudinary
-  - AWS S3
+- `app/api/admin/upload/route.ts` uploads to Cloudinary if `CLOUDINARY_CLOUD_NAME` and `CLOUDINARY_UPLOAD_PRESET` are set.
+- If Cloudinary is not configured on Vercel, the upload API returns an explicit error so missing setup is obvious.
 
 ### Option B: Deploy on your own Node server
 
